@@ -3,6 +3,7 @@ import '../settings/settings_view.dart';
 import 'recordings_provider.dart';
 import 'recording.dart';
 import 'package:provider/provider.dart';
+import '../player/player_provider.dart';
 
 class RecordingsListView extends StatelessWidget {
   const RecordingsListView({
@@ -49,6 +50,8 @@ class RecordingsListView extends StatelessWidget {
 // create card widget for each recording here in this file
 
 Widget buildRecordingCard(Recording recording, BuildContext context) {
+  final PlayerProvider playerProvider = Provider.of<PlayerProvider>(context);
+
   return Card(
     color: (recording.predictedAge == recording.actualAge &&
             recording.predictedGender == recording.actualGender)
@@ -64,9 +67,13 @@ Widget buildRecordingCard(Recording recording, BuildContext context) {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            leading: const CircleAvatar(
-              // Display the Flutter Logo image asset.
-              foregroundImage: AssetImage('assets/images/flutter_logo.png'),
+            leading: FloatingActionButton(
+              shape: const CircleBorder(),
+              onPressed: () async {
+                await playerProvider.controller.stopPlayer();
+                await playerProvider.startPlaying(recording.path);
+              },
+              child: const Icon(Icons.play_arrow),
             ),
             subtitle: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
