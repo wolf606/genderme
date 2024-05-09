@@ -33,16 +33,14 @@ class RecordingsListView extends StatelessWidget {
       ),
 
       // show the consitency matrix and the list of recordings
-      body: Expanded(
-        child: ListView.builder(
-          restorationId: 'recordingsListView',
-          itemCount: recordingsProvider.recordings.length,
-          itemBuilder: (BuildContext context, int index) {
-            final recording = recordingsProvider.recordings[index];
+      body: ListView.builder(
+        restorationId: 'recordingsListView',
+        itemCount: recordingsProvider.recordings.length,
+        itemBuilder: (BuildContext context, int index) {
+          final recording = recordingsProvider.recordings[index];
 
-            return buildRecordingCard(recording, context);
-          },
-        ),
+          return buildRecordingCard(recording, context);
+        },
       ),
     );
   }
