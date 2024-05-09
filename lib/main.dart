@@ -9,6 +9,7 @@ import 'src/recordings_database/database.dart';
 import 'package:provider/provider.dart';
 import 'src/recordings/recordings_provider.dart';
 import 'src/recorder/recorder_provider.dart';
+import 'src/player/player_provider.dart';
 import 'src/tab_provider.dart';
 
 void main() async {
@@ -32,6 +33,7 @@ void main() async {
       ChangeNotifierProvider(create: (context) => RecordingsProvider(database)),
       ChangeNotifierProvider(create: (context) => RecorderProvider()),
       ChangeNotifierProvider(create: (context) => TabControllerProvider()),
+      ChangeNotifierProvider(create: (context) => PlayerProvider()),
     ],
     child: MyApp(settingsController: settingsController),
   ));
