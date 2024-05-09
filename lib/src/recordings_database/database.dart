@@ -31,7 +31,7 @@ class RecordingsDatabase {
         ''');
       },
     );
-
+/*
     // delete all recordings
     await db.delete(tableName);
 
@@ -58,7 +58,7 @@ class RecordingsDatabase {
         columnActualAge: 'twenties',
         columnActualGender: 'male'
       },
-    );
+    );*/
 
     return db;
   }
