@@ -8,8 +8,12 @@ import 'recordings/recordings_list_view.dart';
 import 'settings/settings_controller.dart';
 import 'settings/settings_view.dart';
 
+import 'recorder/recorder_view.dart';
+import './tab_provider.dart';
+import 'package:provider/provider.dart';
+
 /// The Widget that configures your application.
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({
     super.key,
     required this.settingsController,
@@ -18,24 +22,25 @@ class MyApp extends StatelessWidget {
   final SettingsController settingsController;
 
   @override
+  MyAppState createState() => MyAppState();
+}
+
+class MyAppState extends State<MyApp> with TickerProviderStateMixin {
+  @override
+  void initState() {
+    super.initState();
+    final tabControllerProvider =
+        Provider.of<TabControllerProvider>(context, listen: false);
+    tabControllerProvider.initializeTabController(this, length: 2);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Glue the SettingsController to the MaterialApp.
-    //
-    // The ListenableBuilder Widget listens to the SettingsController for changes.
-    // Whenever the user updates their settings, the MaterialApp is rebuilt.
     return ListenableBuilder(
-      listenable: settingsController,
+      listenable: widget.settingsController,
       builder: (BuildContext context, Widget? child) {
         return MaterialApp(
-          // Providing a restorationScopeId allows the Navigator built by the
-          // MaterialApp to restore the navigation stack when a user leaves and
-          // returns to the app after it has been killed while running in the
-          // background.
           restorationScopeId: 'app',
-
-          // Provide the generated AppLocalizations to the MaterialApp. This
-          // allows descendant Widgets to display the correct translations
-          // depending on the user's locale.
           localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
@@ -45,31 +50,15 @@ class MyApp extends StatelessWidget {
           supportedLocales: const [
             Locale('en', ''), // English, no country code
           ],
-
-          // Use AppLocalizations to configure the correct application title
-          // depending on the user's locale.
-          //
-          // The appTitle is defined in .arb files found in the localization
-          // directory.
           onGenerateTitle: (BuildContext context) =>
               AppLocalizations.of(context)!.appTitle,
-
-          // Define a light and dark color theme. Then, read the user's
-          // preferred ThemeMode (light, dark, or system default) from the
-          // SettingsController to display the correct theme.
-          theme: ThemeData(),
-          darkTheme: ThemeData.dark(),
-          themeMode: settingsController.themeMode,
-
-          // Define a function to handle named routes in order to support
-          // Flutter web url navigation and deep linking.
           onGenerateRoute: (RouteSettings routeSettings) {
             return MaterialPageRoute<void>(
               settings: routeSettings,
               builder: (BuildContext context) {
                 switch (routeSettings.name) {
                   case SettingsView.routeName:
-                    return SettingsView(controller: settingsController);
+                    return SettingsView(controller: widget.settingsController);
                   case SampleItemDetailsView.routeName:
                     return const SampleItemDetailsView();
                   case RecordingsListView.routeName:
@@ -81,6 +70,31 @@ class MyApp extends StatelessWidget {
               },
             );
           },
+          theme: ThemeData(),
+          darkTheme: ThemeData.dark(),
+          themeMode: widget.settingsController.themeMode,
+          home: Scaffold(
+            appBar: AppBar(
+              title: const Text('Gender Me'),
+              bottom: TabBar(
+                controller:
+                    Provider.of<TabControllerProvider>(context).tabController,
+                tabs: const [
+                  Tab(icon: Icon(Icons.mic), text: 'Recorder'),
+                  Tab(icon: Icon(Icons.list), text: 'Recordings'),
+                ],
+              ),
+            ),
+            body: TabBarView(
+              controller:
+                  Provider.of<TabControllerProvider>(context).tabController,
+              children: const [
+                // Replace these with your actual views
+                Center(child: RecorderView()),
+                RecordingsListView(),
+              ],
+            ),
+          ),
         );
       },
     );

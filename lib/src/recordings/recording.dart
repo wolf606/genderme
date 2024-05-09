@@ -1,7 +1,7 @@
 import '../recordings_database/database.dart';
 
 class Recording {
-  final int id;
+  final int? id;
   final String path;
   final DateTime recordedAt;
   final String predictedAge;
@@ -14,7 +14,6 @@ class Recording {
 
   Map<String, dynamic> toMap() {
     return {
-      RecordingsDatabase.columnId: id,
       RecordingsDatabase.columnPath: path,
       RecordingsDatabase.columnRecordedAt: recordedAt.toString(),
       RecordingsDatabase.columnPredictedAge: predictedAge,

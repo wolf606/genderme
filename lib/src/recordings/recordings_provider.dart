@@ -23,13 +23,15 @@ class RecordingsProvider extends ChangeNotifier {
       recording.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
-    _recordings.add(recording);
+    _recordings = await getRecordings();
     notifyListeners();
   }
 
   Future<List<Recording>> getRecordings() async {
-    final List<Map<String, dynamic>> maps =
-        await database.query(RecordingsDatabase.tableName);
+    final List<Map<String, dynamic>> maps = await database.query(
+      RecordingsDatabase.tableName,
+      orderBy: '${RecordingsDatabase.columnId} DESC',
+    );
     return List.generate(maps.length, (i) => Recording.fromMap(maps[i]));
   }
 }

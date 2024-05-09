@@ -8,6 +8,8 @@ import 'src/recordings_database/database.dart';
 
 import 'package:provider/provider.dart';
 import 'src/recordings/recordings_provider.dart';
+import 'src/recorder/recorder_provider.dart';
+import 'src/tab_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +30,8 @@ void main() async {
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (context) => RecordingsProvider(database)),
+      ChangeNotifierProvider(create: (context) => RecorderProvider()),
+      ChangeNotifierProvider(create: (context) => TabControllerProvider()),
     ],
     child: MyApp(settingsController: settingsController),
   ));
