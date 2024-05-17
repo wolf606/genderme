@@ -19,7 +19,7 @@ class RecordingsListView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Recordings'),
+        title: Text('Recordings', style: TextStyle(color: Theme.of(context).hintColor, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -60,19 +60,16 @@ Widget buildRecordingCard(Recording recording, BuildContext context) {
     child: Column(
       children: [
         ListTile(
-            title: Text(
-              'Recording ${recording.id}',
-              style: const TextStyle(
-                fontSize: 20.0,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            
             leading: FloatingActionButton(
+              heroTag: 'play${recording.id}',
               shape: const CircleBorder(),
               onPressed: () async {
                 await playerProvider.controller.stopPlayer();
                 await playerProvider.startPlaying(recording.path);
               },
+              
+              
               child: const Icon(Icons.play_arrow),
             ),
             subtitle: Column(
@@ -80,17 +77,21 @@ Widget buildRecordingCard(Recording recording, BuildContext context) {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ListTile(
-                    title: Text('Predicted Age: ${recording.predictedAge}'),
-                    subtitle: Text('Actual Age: ${recording.actualAge}'),
-                    leading: const Icon(Icons.person),
+                    title: Text('Predicted Age: ${recording.predictedAge}', style: TextStyle(color: Theme.of(context).hintColor, fontWeight: FontWeight.bold)
+                    ),
+                    subtitle: Text('Actual Age: ${recording.actualAge}', style: TextStyle(color: Theme.of(context).hintColor, fontWeight: FontWeight.bold),
+                    ),
+                    leading: Icon(Icons.person, color: Theme.of(context).hintColor,),
                   ),
                   ListTile(
                     title:
-                        Text('Predicted gender: ${recording.predictedGender}'),
-                    subtitle: Text('Actual gender: ${recording.actualGender}'),
+                        Text('Predicted gender: ${recording.predictedGender}', style: TextStyle(color: Theme.of(context).hintColor, fontWeight: FontWeight.bold)
+                        ),
+                    subtitle: Text('Actual gender: ${recording.actualGender}', style: TextStyle(color: Theme.of(context).hintColor, fontWeight: FontWeight.bold)
+                    ),
                     leading: (recording.predictedGender == 'male')
-                        ? const Icon(Icons.male)
-                        : const Icon(Icons.female),
+                        ? Icon(Icons.male, color: Theme.of(context).hintColor,)
+                        : Icon(Icons.female, color: Theme.of(context).hintColor,),
                   ),
                 ])),
       ],

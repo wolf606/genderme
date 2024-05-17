@@ -33,7 +33,7 @@ class RecorderProvider with ChangeNotifier {
     _controller.androidEncoder = AndroidEncoder.aac;
     _controller.androidOutputFormat = AndroidOutputFormat.mpeg4;
     _controller.iosEncoder = IosEncoder.kAudioFormatMPEG4AAC;
-    _controller.sampleRate = 44100;
+    _controller.sampleRate = 16000;
     _controller.bitRate = 48000;
 
     _controller.onRecorderStateChanged.listen((state) {

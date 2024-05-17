@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'recorder_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
-import '../trained_model/trained_model.dart';
 import '../recordings/recordings_provider.dart';
 import '../recordings/recording.dart';
 import '../player/player_provider.dart';
+import '../trained_model/trained_model_provider.dart';
 import '../tab_provider.dart';
 import 'dart:ui';
-
 class RecorderView extends StatelessWidget {
   const RecorderView({super.key});
 
@@ -44,6 +43,7 @@ class RecordingWidgetState extends State<RecordingWidget> {
     final recordingsProvider = Provider.of<RecordingsProvider>(context);
     final tabProvider = Provider.of<TabControllerProvider>(context);
     final playerProvider = Provider.of<PlayerProvider>(context);
+    final TfModelProvider tfModelProvider = Provider.of<TfModelProvider>(context);
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         double top = (constraints.maxHeight - 100) /
@@ -60,25 +60,38 @@ class RecordingWidgetState extends State<RecordingWidget> {
                 width: 100,
                 height: 100,
                 child: FloatingActionButton(
+                  heroTag: 'record',
                   onPressed: () async {
                     if (recorderProvider.isRecording) {
                       recorderProvider
                           .setLoading(true); // Show the loading dialog
                       await recorderProvider.stopRecording(context);
                       recorderProvider.setRecording(false);
-                      final result = await processAudio(
+                      final result = await tfModelProvider.processAudio(
                           recorderProvider.currentPath ?? '');
-
-                      recorderProvider.setPredictedAge(result['predicted_age']);
+                      
+                      if (result) {
+                        final didIt = await tfModelProvider.predict();
+                        if (didIt) {
+                          
+                          recorderProvider.setPredictedAge(tfModelProvider.predictedAge);
                       recorderProvider
-                          .setPredictedGender(result['predicted_gender']);
+                          .setPredictedGender(tfModelProvider.predictedGender);
 
-                      recorderProvider.setActualAge(result['predicted_age']);
+                      recorderProvider.setActualAge(tfModelProvider.predictedAge);
                       recorderProvider
-                          .setActualGender(result['predicted_gender']);
-
-                      recorderProvider.setLoading(false);
-                      recorderProvider.setChecking(true);
+                          .setActualGender(tfModelProvider.predictedGender);
+                          recorderProvider.setChecking(true);
+                          recorderProvider.setLoading(false);
+                        } else {
+                          recorderProvider.setLoading(false);
+                          tfModelProvider.setError(true);
+                        }
+                      } else {
+                        recorderProvider.setChecking(false);
+                        recorderProvider.setLoading(false);
+                        tfModelProvider.setError(true);
+                      }
                     } else {
                       await recorderProvider.startRecording();
                       recorderProvider.setRecording(true);
@@ -103,16 +116,33 @@ class RecordingWidgetState extends State<RecordingWidget> {
                     waveStyle: WaveStyle(
                       showDurationLabel: true,
                       spacing: 8.0,
-                      showBottom: false,
+                      showBottom: true,
                       extendWaveform: true,
                       showMiddleLine: false,
                       waveColor: Theme.of(context).hintColor,
-                      durationLinesColor: Colors.purple.shade200,
+                      durationLinesColor: Colors.deepPurple.shade400,
                       durationStyle: TextStyle(
-                        color: Colors.purple.shade200,
+                        color: Colors.deepPurple.shade400,
                         fontSize: 16,
                       ),
                     ))),
+            if (tfModelProvider.isError) 
+              BackdropFilter(
+                //Button to close the error dialog
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: AlertDialog(
+                  title: const Text('Error processing audio'),
+                  content: const Text('Please try again'),
+                  actions: [
+                    ElevatedButton(
+                      onPressed: () {
+                        tfModelProvider.setError(false);
+                      },
+                      child: const Text('Close'),
+                    ),
+                  ],
+                ),
+              ),
             if (recorderProvider.isLoading)
               BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -125,6 +155,7 @@ class RecordingWidgetState extends State<RecordingWidget> {
               BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: AlertDialog(
+                  contentPadding: const EdgeInsets.all(0),
                     // dropdowns for actual age and actual gender
                     title: const Text('Checking prediction accuracy'),
                     content: Column(
@@ -135,6 +166,7 @@ class RecordingWidgetState extends State<RecordingWidget> {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             FloatingActionButton(
+                              heroTag: 'play',
                               shape: const CircleBorder(),
                               onPressed: () async {
                                 if (playerProvider.state ==
@@ -166,15 +198,46 @@ class RecordingWidgetState extends State<RecordingWidget> {
                             AudioFileWaveforms(
                                 size: const Size(200, 100),
                                 playerController: playerProvider.controller,
+                                playerWaveStyle: PlayerWaveStyle(
+                fixedWaveColor: Theme.of(context).hintColor,
+                liveWaveColor: Colors.deepPurple.shade400,
+                seekLineColor: Theme.of(context).hintColor
+              ),
                                 enableSeekGesture: true,
-                                waveformType: WaveformType.long),
+                                waveformType: WaveformType.long)
                           ],
                         ),
                         const SizedBox(height: 40),
+                        Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 150,
+                                    height: 50,
+                                    child: ListTile(
+                                      title: Text(recorderProvider.predictedGender ?? ''),
+                                      leading: (recorderProvider.predictedGender == 'male')
+                        ? Icon(Icons.male, color: Theme.of(context).hintColor,)
+                        : Icon(Icons.female, color: Theme.of(context).hintColor,),
+                                    )
+                                  ),
+                                  SizedBox(
+                                    width: 150,
+                                    height: 50,
+                                    child: ListTile(
+                                      title: Text(recorderProvider.predictedAge ?? ''),
+                                      leading: const Icon(Icons.person),
+                                    )
+                                  )
+                                ],
+                              ),
                         Padding(
                           padding: const EdgeInsets.all(20),
                           child: Column(
                             children: [
+                              const SizedBox(height: 20),
                               const Text('Select actual age and gender',
                                   style: TextStyle(
                                       fontSize: 16,
@@ -196,12 +259,9 @@ class RecordingWidgetState extends State<RecordingWidget> {
                                         'teens',
                                         'twenties',
                                         'thirties',
-                                        'forties',
+                                        'fourties',
                                         'fifties',
                                         'sixties',
-                                        'seventies',
-                                        'eighties',
-                                        'nineties',
                                       ].map<DropdownMenuItem<String>>(
                                           (String value) {
                                         return DropdownMenuItem<String>(

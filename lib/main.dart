@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'src/recordings/recordings_provider.dart';
 import 'src/recorder/recorder_provider.dart';
 import 'src/player/player_provider.dart';
+import 'src/trained_model/trained_model_provider.dart';
 import 'src/tab_provider.dart';
 
 void main() async {
@@ -34,6 +35,7 @@ void main() async {
       ChangeNotifierProvider(create: (context) => RecorderProvider()),
       ChangeNotifierProvider(create: (context) => TabControllerProvider()),
       ChangeNotifierProvider(create: (context) => PlayerProvider()),
+      ChangeNotifierProvider(create: (context) => TfModelProvider()),
     ],
     child: MyApp(settingsController: settingsController),
   ));
