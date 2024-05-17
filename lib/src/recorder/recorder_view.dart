@@ -6,8 +6,10 @@ import '../recordings/recordings_provider.dart';
 import '../recordings/recording.dart';
 import '../player/player_provider.dart';
 import '../trained_model/trained_model_provider.dart';
+import '../tts/tts_provider.dart';
 import '../tab_provider.dart';
 import 'dart:ui';
+
 class RecorderView extends StatelessWidget {
   const RecorderView({super.key});
 
@@ -43,7 +45,10 @@ class RecordingWidgetState extends State<RecordingWidget> {
     final recordingsProvider = Provider.of<RecordingsProvider>(context);
     final tabProvider = Provider.of<TabControllerProvider>(context);
     final playerProvider = Provider.of<PlayerProvider>(context);
-    final TfModelProvider tfModelProvider = Provider.of<TfModelProvider>(context);
+    final TfModelProvider tfModelProvider =
+        Provider.of<TfModelProvider>(context);
+    final TextToSpeechProvider ttsProvider =
+        Provider.of<TextToSpeechProvider>(context);
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         double top = (constraints.maxHeight - 100) /
@@ -67,22 +72,31 @@ class RecordingWidgetState extends State<RecordingWidget> {
                           .setLoading(true); // Show the loading dialog
                       await recorderProvider.stopRecording(context);
                       recorderProvider.setRecording(false);
-                      final result = await tfModelProvider.processAudio(
-                          recorderProvider.currentPath ?? '');
-                      
+                      final result = await tfModelProvider
+                          .processAudio(recorderProvider.currentPath ?? '');
+
                       if (result) {
                         final didIt = await tfModelProvider.predict();
                         if (didIt) {
-                          
-                          recorderProvider.setPredictedAge(tfModelProvider.predictedAge);
-                      recorderProvider
-                          .setPredictedGender(tfModelProvider.predictedGender);
+                          recorderProvider
+                              .setPredictedAge(tfModelProvider.predictedAge);
+                          recorderProvider.setPredictedGender(
+                              tfModelProvider.predictedGender);
 
-                      recorderProvider.setActualAge(tfModelProvider.predictedAge);
-                      recorderProvider
-                          .setActualGender(tfModelProvider.predictedGender);
-                          recorderProvider.setChecking(true);
+                          recorderProvider
+                              .setActualAge(tfModelProvider.predictedAge);
+                          recorderProvider
+                              .setActualGender(tfModelProvider.predictedGender);
                           recorderProvider.setLoading(false);
+                          recorderProvider.setChecking(true);
+
+                          //wait 2 seconds before speaking
+                          await Future.delayed(
+                              const Duration(milliseconds: 500));
+
+                          await ttsProvider.speak(generateTttsString(
+                              tfModelProvider.predictedAge,
+                              tfModelProvider.predictedGender));
                         } else {
                           recorderProvider.setLoading(false);
                           tfModelProvider.setError(true);
@@ -126,7 +140,7 @@ class RecordingWidgetState extends State<RecordingWidget> {
                         fontSize: 16,
                       ),
                     ))),
-            if (tfModelProvider.isError) 
+            if (tfModelProvider.isError)
               BackdropFilter(
                 //Button to close the error dialog
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -155,7 +169,7 @@ class RecordingWidgetState extends State<RecordingWidget> {
               BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: AlertDialog(
-                  contentPadding: const EdgeInsets.all(0),
+                    contentPadding: const EdgeInsets.all(0),
                     // dropdowns for actual age and actual gender
                     title: const Text('Checking prediction accuracy'),
                     content: Column(
@@ -196,43 +210,49 @@ class RecordingWidgetState extends State<RecordingWidget> {
                                   : Icons.play_arrow),
                             ),
                             AudioFileWaveforms(
-                                size: const Size(200, 100),
-                                playerController: playerProvider.controller,
-                                playerWaveStyle: PlayerWaveStyle(
-                fixedWaveColor: Theme.of(context).hintColor,
-                liveWaveColor: Colors.deepPurple.shade400,
-                seekLineColor: Theme.of(context).hintColor
-              ),
-                                enableSeekGesture: true,
-                                waveformType: WaveformType.long)
+                              size: const Size(200, 100),
+                              playerController: playerProvider.controller,
+                              playerWaveStyle: PlayerWaveStyle(
+                                  fixedWaveColor: Theme.of(context).hintColor,
+                                  liveWaveColor: Colors.deepPurple.shade400,
+                                  seekLineColor: Theme.of(context).hintColor),
+                              enableSeekGesture: true,
+                              waveformType: WaveformType.long,
+                            )
                           ],
                         ),
                         const SizedBox(height: 40),
                         Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  SizedBox(
-                                    width: 150,
-                                    height: 50,
-                                    child: ListTile(
-                                      title: Text(recorderProvider.predictedGender ?? ''),
-                                      leading: (recorderProvider.predictedGender == 'male')
-                        ? Icon(Icons.male, color: Theme.of(context).hintColor,)
-                        : Icon(Icons.female, color: Theme.of(context).hintColor,),
-                                    )
-                                  ),
-                                  SizedBox(
-                                    width: 150,
-                                    height: 50,
-                                    child: ListTile(
-                                      title: Text(recorderProvider.predictedAge ?? ''),
-                                      leading: const Icon(Icons.person),
-                                    )
-                                  )
-                                ],
-                              ),
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                                width: 150,
+                                height: 50,
+                                child: ListTile(
+                                  title: Text(
+                                      recorderProvider.predictedGender ?? ''),
+                                  leading: (recorderProvider.predictedGender ==
+                                          'male')
+                                      ? Icon(
+                                          Icons.male,
+                                          color: Theme.of(context).hintColor,
+                                        )
+                                      : Icon(
+                                          Icons.female,
+                                          color: Theme.of(context).hintColor,
+                                        ),
+                                )),
+                            SizedBox(
+                                width: 150,
+                                height: 50,
+                                child: ListTile(
+                                  title:
+                                      Text(recorderProvider.predictedAge ?? ''),
+                                  leading: const Icon(Icons.person),
+                                ))
+                          ],
+                        ),
                         Padding(
                           padding: const EdgeInsets.all(20),
                           child: Column(
@@ -240,7 +260,7 @@ class RecordingWidgetState extends State<RecordingWidget> {
                               const SizedBox(height: 20),
                               const Text('Select actual age and gender',
                                   style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 20,
                                       fontWeight: FontWeight.bold)),
                               const SizedBox(height: 20),
                               Row(
@@ -352,5 +372,13 @@ class RecordingWidgetState extends State<RecordingWidget> {
         );
       },
     );
+  }
+
+  generateTttsString(String predictedAge, String predictedGender) {
+    if (predictedGender == 'male') {
+      return 'A $predictedGender in her $predictedAge';
+    } else {
+      return 'A $predictedGender in his $predictedAge';
+    }
   }
 }

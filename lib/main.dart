@@ -11,6 +11,7 @@ import 'src/recordings/recordings_provider.dart';
 import 'src/recorder/recorder_provider.dart';
 import 'src/player/player_provider.dart';
 import 'src/trained_model/trained_model_provider.dart';
+import 'src/tts/tts_provider.dart';
 import 'src/tab_provider.dart';
 
 void main() async {
@@ -36,6 +37,7 @@ void main() async {
       ChangeNotifierProvider(create: (context) => TabControllerProvider()),
       ChangeNotifierProvider(create: (context) => PlayerProvider()),
       ChangeNotifierProvider(create: (context) => TfModelProvider()),
+      ChangeNotifierProvider(create: (context) => TextToSpeechProvider()),
     ],
     child: MyApp(settingsController: settingsController),
   ));
