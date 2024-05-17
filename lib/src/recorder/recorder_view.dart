@@ -376,9 +376,9 @@ class RecordingWidgetState extends State<RecordingWidget> {
 
   generateTttsString(String predictedAge, String predictedGender) {
     if (predictedGender == 'male') {
-      return 'A $predictedGender in her $predictedAge';
-    } else {
       return 'A $predictedGender in his $predictedAge';
+    } else {
+      return 'A $predictedGender in her $predictedAge';
     }
   }
 }
